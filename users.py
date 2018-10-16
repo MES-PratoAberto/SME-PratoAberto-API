@@ -1,4 +1,5 @@
 import os
+import traceback
 
 from flask import make_response, request, jsonify, Blueprint
 from pymongo import MongoClient
@@ -28,10 +29,19 @@ def check_autenticacao(email, senha):
     Funcao para checar combinacao de username e password
     """
     query = {'email': email}
-
+    print("###################### BF Try")
     try:
         usuario = db.usuarios.find_one(query, {'_id': 0})
-    except:
+
+        print ("###################### usuario: " + str(usuario))
+        print ("###################### usuario['email']: " + str(usuario['email']))
+        print ("###################### usuario['senha']: " + str(usuario['senha']))
+
+        # no = None
+        # bug = no.datas
+
+    except Exception as exception:
+        traceback.print_exc()
         return False
 
     return email == usuario['email'] and check_password_hash(usuario['senha'], senha)
@@ -41,6 +51,9 @@ def requer_autenticacao(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         auth = request.authorization
+        print ("###################### auth.username: " + str(auth.username))
+        print ("###################### auth.password: " + str(auth.password))
+        print ("###################### not not auth: " + str(not not auth))
         if not auth or not check_autenticacao(auth.username, auth.password):
             return Response('Could not verify your access level for that URL.\n'
                             'You have to login with proper credentials', 401,

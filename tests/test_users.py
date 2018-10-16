@@ -70,9 +70,11 @@ class TestUsers:
 
         self.tear_down(self.user_data['email'])
         self.mock_user()
-        res = client.delete(url, headers=self.headers)
+        res = client.delete(url, headers=self.headers_auth)
 
-        assert res.status_code == 200
+        print('("###################### res: ' + str(res.data.decode('utf-8')))
+        # assert False
+        assert res != None and res.status_code == 200
         self.tear_down(self.user_data['email'])
 
     def test_get_usuarios(self, client):
@@ -86,8 +88,11 @@ class TestUsers:
         self.tear_down(self.user_data['email'])
         self.mock_user()
 
-        res = client.get('/usuario/test@sme.prefeitura.sp.gov.br')
-        assert res.json == [{
+        res = client.get('/usuario/test@sme.prefeitura.sp.gov.br', headers=self.headers_auth)
+
+        print('("###################### res: ' + str(res.data.decode('utf-8')))
+        # assert False
+        assert res != None and res.json == [{
                 "email": "test@sme.prefeitura.sp.gov.br",
                 "senha": "12345"
         }]
