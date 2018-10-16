@@ -7,8 +7,7 @@ from pymongo import MongoClient
 from bson import json_util
 from users import users_api
 
-app = Flask(__name__)
-app.register_blueprint(users_api)
+
 API_KEY = os.environ.get('API_KEY')
 API_MONGO_URI = 'mongodb://{}'.format(os.environ.get('API_MONGO_URI'))
 
@@ -19,6 +18,7 @@ db = client['pratoaberto']
 def create_app():
 
     app = Flask(__name__)
+    app.register_blueprint(users_api)
 
     with open('de_para.json', 'r') as f:
         conf = json.load(f)
@@ -110,9 +110,10 @@ def create_app():
             }
 
             _cardapios = []
-            cardapios = db.cardapios.find(query, fields).sort([('data',
-                                                                -1)]).limit(15)
-            c = fill_cardapios_idade(c, cardapio_ordenado, idades, refeicoes)
+            cardapios = db.cardapios.find(query, fields).sort([('data', -1)]).limit(15)
+            for c in cardapios:
+                c['idade'] = idades[c['idade']]
+                c['cardapio'] = {refeicoes[k]: v for k, v in c['cardapio'].items()}
             response = app.response_class(
                 response=json_util.dumps(cardapios),
                 status=200,
@@ -142,10 +143,7 @@ def create_app():
 
     def fill_cardapios_idade(dictionary, lista_cardapios, idades, refeicoes):
         for dictionary in lista_cardapios:
-            dictionary['idade'] = idades[c['idade']]
-            dictionary['cardapio'] = {
-                                     refeicoes[k]: v for k,
-                                     v in c['cardapio'].items()}
+            dictionary['idade'] = idades[dictionary['idade']]
         return dictionary
 
     @app.route('/cardapios')
@@ -199,7 +197,10 @@ def create_app():
                     cardapio_ordenado.append(c)
                     continue
 
-        c = fill_cardapios_idade(c, cardapio_ordenado, idades, refeicoes)
+        for c in cardapio_ordenado:
+            c['idade'] = idades[c['idade']]
+
+        ##c = fill_cardapios_idade(c,cardapio_ordenado,idades,refeicoes)
 
         for c in cardapio_ordenado:
             for x in refeicoes:
