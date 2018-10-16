@@ -5,7 +5,8 @@ import os
 from flask import Flask, request
 from pymongo import MongoClient
 from bson import json_util
-from users import users_api
+from users import users_api, requer_autenticacao
+from flasgger import Swagger, swag_from
 
 
 API_KEY = os.environ.get('API_KEY')
@@ -19,6 +20,8 @@ def create_app():
 
     app = Flask(__name__)
     app.register_blueprint(users_api)
+
+    swagger = Swagger(app)
 
     with open('de_para.json', 'r') as f:
         conf = json.load(f)
@@ -58,6 +61,7 @@ def create_app():
             return response
 
     @app.route('/escolas')
+    @swag_from('swagger_docs/escolas.yml')
     def get_lista_escolas():
         query = {'status': 'ativo'}
         fields = {'_id': True, 'nome': True}
@@ -81,6 +85,7 @@ def create_app():
         return response
 
     @app.route('/escola/<int:id_escola>')
+    @swag_from('swagger_docs/escola.yml')
     def get_detalhe_escola(id_escola):
         query = {'_id': id_escola, 'status': 'ativo'}
         fields = {'_id': False, 'status': False}
@@ -90,6 +95,7 @@ def create_app():
 
     @app.route('/escola/<int:id_escola>/cardapios')
     @app.route('/escola/<int:id_escola>/cardapios/<data>')
+    @swag_from('swagger_docs/escola_cardapios.yml')
     def get_cardapio_escola(id_escola, data=None):
         escola = db.escolas.find_one({'_id': id_escola}, {'_id': False})
         if escola:
@@ -150,6 +156,7 @@ def create_app():
 
     @app.route('/cardapios')
     @app.route('/cardapios/<data>')
+    @swag_from('swagger_docs/cardapios.yml')
     def get_cardapios(data=None):
         query = {
             'status': 'PUBLICADO'
@@ -218,6 +225,7 @@ def create_app():
         return response
 
     @app.route('/editor/cardapios', methods=['GET', 'POST'])
+    @swag_from('swagger_docs/editor_cardapios.yml')
     def get_cardapios_editor():
         key = request.headers.get('key')
         if key != API_KEY:
@@ -265,6 +273,7 @@ def create_app():
             return ('', 200)
 
     @app.route('/editor/escolas')
+    @swag_from('swagger_docs/editor_escolas.yml')
     def get_escolas_editor():
         key = request.headers.get('key')
         if key != API_KEY:
@@ -281,6 +290,8 @@ def create_app():
         return response
 
     @app.route('/editor/escola/<int:id_escola>', methods=['POST'])
+    @swag_from('swagger_docs/editor_escola.yml')
+    @requer_autenticacao
     def edit_escola(id_escola):
         key = request.headers.get('key')
         if key != API_KEY:
