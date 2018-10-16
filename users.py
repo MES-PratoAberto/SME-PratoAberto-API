@@ -34,6 +34,13 @@ def check_autenticacao(email, senha):
     except:
         return False
 
+
+    print('################################## usrname in:' + str(email))
+    print('################################## pass in:' + str(senha))
+
+    print('################################## usuario email db:' + str(usuario['email']))
+    print('################################## usuario senha db:' + str(usuario['senha']))
+
     return email == usuario['email'] and check_password_hash(usuario['senha'], senha)
 
 

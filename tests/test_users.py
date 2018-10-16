@@ -1,6 +1,8 @@
+import base64
 import os
 import json
 from pymongo import MongoClient
+from werkzeug.security import generate_password_hash
 
 API_MONGO_URI = 'mongodb://{}'.format(os.environ.get('API_MONGO_URI'))
 client = MongoClient(API_MONGO_URI)
@@ -18,6 +20,22 @@ class TestUsers:
             'email': 'test@sme.prefeitura.sp.gov.br',
             'senha': '12345'
     }
+
+    auth_user_data = {
+            'email': 'auth@sme.prefeitura.sp.gov.br',
+            'senha': '12345'
+    }
+
+    hashed_auth_user_data = {
+            'email': 'auth@sme.prefeitura.sp.gov.br',
+            'senha': generate_password_hash(auth_user_data['senha'], "sha256")
+    }
+
+    def mock_auth_user(self):
+        query = {'email': self.auth_user_data['email']}
+        db.usuarios.delete_one(query)
+        db.usuarios.insert_one(self.hashed_auth_user_data)
+
 
     def mock_user(self):
         db.usuarios.insert_one(self.user_data)
@@ -73,6 +91,7 @@ class TestUsers:
 
         self.tear_down(self.user_data['email'])
         self.mock_user()
+        self.mock_auth_user()
 
         new_user_data = {
                 'email': 'test@sme.prefeitura.sp.gov.br',
@@ -80,7 +99,7 @@ class TestUsers:
         }
 
         res = client.put(url, data=json.dumps(new_user_data),
-                         headers=self.headers)
+                         headers=self.headers_auth)
 
         assert res.status_code == 201
         self.tear_down(self.user_data['email'])
