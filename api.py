@@ -186,8 +186,6 @@ def create_app():
         for c in cardapio_ordenado:
             c['idade'] = idades[c['idade']]
 
-        ##c = fill_cardapios_idade(c,cardapio_ordenado,idades,refeicoes)
-
         for c in cardapio_ordenado:
             for x in refeicoes:
                 if refeicoes[x] in c['cardapio']:
