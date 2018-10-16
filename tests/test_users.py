@@ -31,6 +31,15 @@ class TestUsers:
             'senha': generate_password_hash(auth_user_data['senha'], "sha256")
     }
 
+    valid_credentials = base64.b64encode(bytes(auth_user_data['email']+":"+auth_user_data['senha'], 'ascii')).decode('utf-8')
+    #base64.b64encode(bytes(auth_user_data['email']+":"+auth_user_data['senha'], 'ascii')).decode('ascii')
+
+    headers_auth = {
+        'Authorization': 'Basic ' + valid_credentials,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+    }
+
     def mock_auth_user(self):
         query = {'email': self.auth_user_data['email']}
         db.usuarios.delete_one(query)
