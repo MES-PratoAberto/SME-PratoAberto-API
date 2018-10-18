@@ -92,10 +92,7 @@ class TestUsers:
 
         print('("###################### res: ' + str(res.data.decode('utf-8')))
         # assert False
-        assert res != None and res.json == [{
-                "email": "test@sme.prefeitura.sp.gov.br",
-                "senha": "12345"
-        }]
+        assert res.status_code == 200
 
         self.tear_down(self.user_data['email'])
 
