@@ -60,6 +60,7 @@ def create_app():
                 )
             return response
 
+
     @app.route('/escolas')
     @swag_from('swagger_docs/escolas.yml')
     def get_lista_escolas():
@@ -93,46 +94,75 @@ def create_app():
         response = choose_escola_atributos(escola)
         return response
 
+    def reverte_idades(idade):
+        idades_revertidas = {v: k for k, v in conf['idades'].items()}
+
+        return idades_revertidas.get(idade)
+
+    def query_escola_cardapio(escola, data):
+
+        query = {
+            'status': 'PUBLICADO',
+            'agrupamento': str(escola['agrupamento']),
+            'tipo_atendimento': escola['tipo_atendimento'],
+            'tipo_unidade': escola['tipo_unidade']
+        }
+
+        if request.args.get('idade'):
+            query['idade'] = reverte_idades(request.args['idade'])
+
+        query = fill_data_query(query, data, request)
+
+        return query
+
+    def busca_cardapios_escola(query):
+
+        fields = {
+            '_id': False,
+            'status': False,
+            'cardapio_original': False
+        }
+
+        cardapios = db.cardapios.find(query, fields)
+        cardapios.sort([('data', -1)]).limit(15)
+
+        return cardapios
+
+    def busca_refeicoes_cardapio(cardapios):
+
+        for cardapio in cardapios:
+            cardapio['idade'] = idades[cardapio['idade']]
+            cardapio['cardapio'] = {
+                                    refeicoes[refeicao]: item for refeicao,
+                                    item in cardapio['cardapio'].items()
+                                   }
+            return cardapio
+
     @app.route('/escola/<int:id_escola>/cardapios')
     @app.route('/escola/<int:id_escola>/cardapios/<data>')
     @swag_from('swagger_docs/escola_cardapios.yml')
     def get_cardapio_escola(id_escola, data=None):
+
         escola = db.escolas.find_one({'_id': id_escola}, {'_id': False})
-        if escola:
-            query = {
-                'status': 'PUBLICADO',
-                'agrupamento': str(escola['agrupamento']),
-                'tipo_atendimento': escola['tipo_atendimento'],
-                'tipo_unidade': escola['tipo_unidade']
-            }
 
-            if request.args.get('idade'):
-                query['idade'] = idades_reversed.get(request.args['idade'])
+        if escola is not None:
+            query = query_escola_cardapio(escola, data)
+            cardapios = busca_cardapios_escola(query)
+            cardapios = busca_refeicoes_cardapio(cardapios)
 
-            query = fill_data_query(query, data, request)
-
-            fields = {
-                '_id': False,
-                'status': False,
-                'cardapio_original': False
-            }
-
-            _cardapios = []
-            cardapios = db.cardapios.find(query, fields).sort([('data', -1)]).limit(15)
-            for c in cardapios:
-                c['idade'] = idades[c['idade']]
-                c['cardapio'] = {refeicoes[k]: v for k, v in c['cardapio'].items()}
             response = app.response_class(
                 response=json_util.dumps(cardapios),
                 status=200,
                 mimetype='application/json'
             )
+
         else:
             response = app.response_class(
                 response=json_util.dumps({'erro': 'Escola inexistente'}),
                 status=404,
                 mimetype='application/json'
             )
+
         return response
 
     def cardapios_from_db(page, limit, cardapios):
