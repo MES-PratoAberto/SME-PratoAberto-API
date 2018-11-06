@@ -6,7 +6,7 @@ from flask import request, Blueprint, Response
 from pymongo import MongoClient
 from bson import json_util
 from flasgger import swag_from
-
+from utils.utils import update_data, fill_data_query
 
 API_KEY = os.environ.get('API_KEY')
 API_MONGO_URI = 'mongodb://{}'.format(os.environ.get('API_MONGO_URI'))
@@ -42,25 +42,6 @@ def choose_escola_atributos(escola):
                 status=404,
                 mimetype='application/json'
             )
-
-
-def update_data(data, request):
-    if request.args.get('data_inicial'):
-        data.update({'$gte': request.args['data_inicial']})
-    if request.args.get('data_final'):
-        data.update({'$lte': request.args['data_final']})
-    return data
-
-
-def fill_data_query(query, data, request):
-    if data:
-        query['data'] = str(data)
-    else:
-        data = {}
-        data = update_data(data, request)
-        if data:
-            query['data'] = data
-    return query
 
 
 @escolas_api.route('/escolas')
