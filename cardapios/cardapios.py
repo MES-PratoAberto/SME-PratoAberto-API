@@ -6,7 +6,7 @@ from flask import request, Blueprint, Response
 from pymongo import MongoClient
 from bson import json_util
 from flasgger import swag_from
-from utils.utils import update_data, fill_data_query
+from utils.utils import update_data, fill_data_query, cardapios_from_db
 
 
 API_KEY = os.environ.get('API_KEY')
@@ -33,13 +33,6 @@ def define_query_from_request(query):
     if request.args.get('idade'):
         query['idade'] = idades_reversed.get(request.args['idade'])
     return query
-
-def cardapios_from_db(page, limit, cardapios):
-    if page and limit:
-        cardapios = cardapios.skip(limit*(page-1)).limit(limit)
-    elif limit:
-        cardapios = cardapios.limit(limit)
-    return cardapios
 
 def preenche_cardapios_idade(lista_cardapios, idades):
     for dictionary in lista_cardapios:
@@ -74,15 +67,13 @@ def get_cardapios(data=None):
     }
     query = define_query_from_request(query)
     query = fill_data_query(query, data, request)
-    limit = int(request.args.get('limit', 0))
-    page = int(request.args.get('page', 0))
     fields = {
         '_id': False,
         'status': False,
         'cardapio_original': False,
     }
     cardapios = db.cardapios.find(query, fields).sort([('data', -1)])
-    cardapios = cardapios_from_db(page, limit, cardapios)
+    cardapios = cardapios_from_db(cardapios, request)
     cardapio_ordenado = []
     definicao_ordenacao = ['A - 0 A 1 MES', 'B - 1 A 3 MESES',
                            'C - 4 A 5 MESES', 'D - 0 A 5 MESES',
