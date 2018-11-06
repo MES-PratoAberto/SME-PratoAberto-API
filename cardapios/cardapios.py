@@ -6,7 +6,7 @@ from flask import request, Blueprint, Response
 from pymongo import MongoClient
 from bson import json_util
 from flasgger import swag_from
-from utils.utils import update_data, fill_data_query, cardapios_from_db
+from utils.utils import update_data, fill_data_query, cardapios_from_db, define_query_from_request
 
 
 API_KEY = os.environ.get('API_KEY')
@@ -22,17 +22,6 @@ with open('de_para.json', 'r') as f:
     refeicoes = conf['refeicoes']
     idades = conf['idades']
     idades_reversed = {v: k for k, v in conf['idades'].items()}
-
-def define_query_from_request(query):
-    if request.args.get('agrupamento'):
-        query['agrupamento'] = request.args['agrupamento']
-    if request.args.get('tipo_atendimento'):
-        query['tipo_atendimento'] = request.args['tipo_atendimento']
-    if request.args.get('tipo_unidade'):
-        query['tipo_unidade'] = request.args['tipo_unidade']
-    if request.args.get('idade'):
-        query['idade'] = idades_reversed.get(request.args['idade'])
-    return query
 
 def preenche_cardapios_idade(lista_cardapios, idades):
     for dictionary in lista_cardapios:
@@ -65,7 +54,7 @@ def get_cardapios(data=None):
     query = {
         'status': 'PUBLICADO'
     }
-    query = define_query_from_request(query)
+    query = define_query_from_request(query, request, True)
     query = fill_data_query(query, data, request)
     fields = {
         '_id': False,

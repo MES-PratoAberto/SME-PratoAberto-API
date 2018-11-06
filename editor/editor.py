@@ -7,7 +7,7 @@ from pymongo import MongoClient
 from bson import json_util
 from flasgger import swag_from
 from users.users import requer_autenticacao
-from utils.utils import update_data, cardapios_from_db
+from utils.utils import update_data, cardapios_from_db, define_query_from_request
 
 
 API_KEY = os.environ.get('API_KEY')
@@ -25,42 +25,36 @@ with open('de_para.json', 'r') as f:
     idades_reversed = {v: k for k, v in conf['idades'].items()}
 
 
-@editor_api.route('/editor/cardapios', methods=['GET', 'POST'])
-@swag_from('swagger_docs/editor_cardapios.yml')
+def query_editor_cardapio():
+    query = {}
+    if request.args.get('status'):
+        query['status'] = {'$in': request.args.getlist('status')}
+    else:
+        query['status'] = 'PUBLICADO'
+
+    query = define_query_from_request(query, request, False)
+
+    data = {}
+    data = update_data(data, request)
+    if data:
+        query['data'] = data
+    return query
+
+
 def get_cardapios_editor():
-    key = request.headers.get('key')
-    if key != API_KEY:
-        return ('', 401)
-    if request.method == 'GET':
-        query = {}
+    query = query_editor_cardapio()
 
-        if request.args.get('status'):
-            query['status'] = {'$in': request.args.getlist('status')}
-        else:
-            query['status'] = 'PUBLICADO'
-        if request.args.get('agrupamento'):
-            query['agrupamento'] = request.args['agrupamento']
-        if request.args.get('tipo_atendimento'):
-            query['tipo_atendimento'] = request.args['tipo_atendimento']
-        if request.args.get('tipo_unidade'):
-            query['tipo_unidade'] = request.args['tipo_unidade']
-        if request.args.get('idade'):
-            query['idade'] = request.args['idade']
-        data = {}
-        data = update_data(data, request)
-        if data:
-            query['data'] = data
+    cardapios = db.cardapios.find(query).sort([('data', -1)])
+    cardapios = cardapios_from_db(cardapios, request)
 
-        cardapios = db.cardapios.find(query).sort([('data', -1)])
-        cardapios = cardapios_from_db(cardapios, request)
-        response = Response(
-            response=json_util.dumps(cardapios),
-            status=200,
-            mimetype='application/json'
-        )
-        return response
+    response = Response(
+        response=json_util.dumps(cardapios),
+        status=200,
+        mimetype='application/json'
+    )
+    return response
 
-    elif request.method == 'POST':
+def post_cardapios_editor(request):
         bulk = db.cardapios.initialize_ordered_bulk_op()
         for item in json_util.loads(request.data.decode("utf-8")):
             try:
@@ -70,6 +64,21 @@ def get_cardapios_editor():
                 bulk.insert(item)
         bulk.execute()
         return ('', 200)
+
+@editor_api.route('/editor/cardapios', methods=['GET', 'POST'])
+@swag_from('swagger_docs/editor_cardapios.yml')
+def processa_cardapios_editor():
+    key = request.headers.get('key')
+    if key != API_KEY:
+        return ('', 401)
+
+    if request.method == 'GET':
+        response = get_cardapios_editor()
+
+    elif request.method == 'POST':
+        response = post_cardapios_editor(request)
+
+    return response
 
 @editor_api.route('/editor/escolas')
 @swag_from('swagger_docs/editor_escolas.yml')
