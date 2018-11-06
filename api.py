@@ -1,15 +1,14 @@
 # -*- coding: utf-8 -*-
-import json
 import os
 
 from flask import Flask, request
 from pymongo import MongoClient
 from bson import json_util
 from users.users import users_api, requer_autenticacao
-from escola.escola import escolas_api
+from escolas.escolas import escolas_api
 from cardapios.cardapios import cardapios_api
 from flasgger import Swagger, swag_from
-from utils.utils import fill_data_query, update_data
+from utils.utils import update_data
 
 API_KEY = os.environ.get('API_KEY')
 API_MONGO_URI = 'mongodb://{}'.format(os.environ.get('API_MONGO_URI'))
@@ -25,12 +24,6 @@ def create_app():
     app.register_blueprint(escolas_api)
     app.register_blueprint(cardapios_api)
     swagger = Swagger(app)
-
-    with open('de_para.json', 'r') as f:
-        conf = json.load(f)
-        refeicoes = conf['refeicoes']
-        idades = conf['idades']
-        idades_reversed = {v: k for k, v in conf['idades'].items()}
 
     @app.route('/editor/cardapios', methods=['GET', 'POST'])
     @swag_from('swagger_docs/editor_cardapios.yml')

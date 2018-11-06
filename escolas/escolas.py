@@ -6,7 +6,7 @@ from flask import request, Blueprint, Response
 from pymongo import MongoClient
 from bson import json_util
 from flasgger import swag_from
-from utils.utils import update_data, fill_data_query
+from utils.utils import fill_data_query
 
 API_KEY = os.environ.get('API_KEY')
 API_MONGO_URI = 'mongodb://{}'.format(os.environ.get('API_MONGO_URI'))
