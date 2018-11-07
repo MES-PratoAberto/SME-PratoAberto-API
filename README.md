@@ -1,4 +1,4 @@
-[![Maintainability](https://api.codeclimate.com/v1/badges/a96e3bfb2024cd6464f7/maintainability)](https://codeclimate.com/github/prefeiturasp/SME-PratoAberto-API/maintainability)
+[![Maintainability](https://api.codeclimate.com/v1/badges/4e16b899340f86cc8a60/maintainability)](https://codeclimate.com/github/MES-PratoAberto/SME-PratoAberto-API/maintainability)
 
 # Pátio Digital
 
