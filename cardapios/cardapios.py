@@ -3,7 +3,7 @@
 from flask import request, Blueprint, Response
 from bson import json_util
 from flasgger import swag_from
-from settings.api_settings import db
+from ODM.flask_odm import find
 from utils.utils import (fill_data_query, define_query_from_request,
                          get_idades_data, get_refeicoes_data)
 
@@ -66,7 +66,7 @@ def get_cardapios(data=None):
         'status': False,
         'cardapio_original': False,
     }
-    cardapios = db.cardapios.find(query, fields).sort([('data', -1)])
+    cardapios = find("cardapios", query=query, fields=fields, sort=True)
     cardapios = cardapios_from_db(cardapios, request)
     cardapio_ordenado = []
     definicao_ordenacao = ['A - 0 A 1 MES', 'B - 1 A 3 MESES',

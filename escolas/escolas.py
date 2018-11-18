@@ -4,6 +4,7 @@ from flask import request, Blueprint, Response
 from bson import json_util
 from flasgger import swag_from
 from settings.api_settings import db
+from ODM.flask_odm import find, find_one
 from utils.utils import (fill_data_query, get_refeicoes_data, get_idades_data,
                          load_json_data)
 
@@ -43,15 +44,14 @@ def get_lista_escolas():
     fields = {'_id': True, 'nome': True}
     try:
         limit = int(request.args.get('limit', 5))
-        # busca por nome
         nome = request.args['nome']
         query['nome'] = {'$regex': nome.replace(' ', '.*'),
                          '$options': 'i'}
-        cursor = db.escolas.find(query, fields).limit(limit)
+        cursor = find("escolas", query=query, fields=fields)
     except KeyError:
         fields.update({k: True for k in ['endereco',
                                          'bairro', 'lat', 'lon']})
-        cursor = db.escolas.find(query, fields)
+        cursor = find("escolas", query=query, fields=fields, limit=limit)
 
     return Response(
         response=json_util.dumps(cursor),
@@ -65,7 +65,7 @@ def get_lista_escolas():
 def get_detalhe_escola(id_escola):
     query = {'_id': id_escola, 'status': 'ativo'}
     fields = {'_id': False, 'status': False}
-    escola = db.escolas.find_one(query, fields)
+    escola = find_one("escolas", query=query, fields=fields)
     response = choose_escola_atributos(escola)
     return response
 
@@ -101,8 +101,7 @@ def busca_cardapios_escola(query):
         'cardapio_original': False
     }
 
-    cardapios = db.cardapios.find(query, fields)
-    cardapios.sort([('data', -1)]).limit(15)
+    cardapios = find("cardapios", query=query, fields=fields, limit=15)
 
     return cardapios
 

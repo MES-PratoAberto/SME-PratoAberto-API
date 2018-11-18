@@ -5,6 +5,7 @@ from bson import json_util
 from flasgger import swag_from
 from users.users import requer_autenticacao
 from cardapios.cardapios import cardapios_from_db
+from ODM.flask_odm import find
 from settings.api_settings import API_KEY, db
 from utils.utils import (update_data, define_query_from_request,
                          get_idades_data, get_refeicoes_data)
@@ -35,7 +36,8 @@ def query_editor_cardapio():
 def get_cardapios_editor():
     query = query_editor_cardapio()
 
-    cardapios = db.cardapios.find(query).sort([('data', -1)])
+    cardapios = find("cardapios", query=query)
+    cardapios.sort([('data', -1)])
     cardapios = cardapios_from_db(cardapios, request)
 
     response = Response(
@@ -82,7 +84,7 @@ def get_escolas_editor():
         return ('', 401)
 
     query = {'status': 'ativo'}
-    cursor = db.escolas.find(query)
+    cursor = find("escolas", query=query)
 
     response = Response(
         response=json_util.dumps(cursor),

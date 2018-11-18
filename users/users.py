@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import os
 
 from flask import make_response, request, jsonify, Blueprint
@@ -7,6 +9,8 @@ from bson import json_util
 from functools import wraps
 from flask import Response
 from flasgger import swag_from
+from ODM.flask_odm import find, find_one
+from settings.api_settings import db
 
 ERRO_DOMINIO = 'Dominio de e-mail nao aceito'
 SUCESSO_CRIACAO_USUARIO = 'Usuario criado com sucesso'
@@ -18,10 +22,6 @@ ERRO_RECUPERAR_USUARIO = 'Nao foi possivel recuperar esse usuario'
 ERRO_ATUALIZAR_USUARIO = 'Nao foi possivel atualizar esse usuario'
 
 users_api = Blueprint('users_api', __name__)
-
-API_MONGO_URI = 'mongodb://{}'.format(os.environ.get('API_MONGO_URI'))
-client = MongoClient(API_MONGO_URI)
-db = client['pratoaberto']
 
 if "usuarios" in db.collection_names():
     usuarios = db['usuarios']
@@ -38,9 +38,10 @@ def check_autenticacao(email, senha):
     Funcao para checar combinacao de username e password
     """
     query = {'email': email}
+    fields = {'_id': 0}
 
     try:
-        usuario = db.usuarios.find_one(query, {'_id': 0})
+        usuario = find_one("usuarios", query=query, fields=fields)
     except:
         return False
 
@@ -118,7 +119,7 @@ def get_usuarios():
     Endpoint para listar usuarios da API
     """
     try:
-        usuarios = db.usuarios.find()
+        usuarios = find("usuarios")
         response = json_util.dumps(usuarios)
     except:
         response = make_response(jsonify({'erro':
@@ -135,9 +136,10 @@ def get_usuario(email):
     Endpoint para recuperar dados de um usuario a partir do email
     """
     query = {'email': email}
+    fields = {'_id': 0}
 
     try:
-        usuario = db.usuarios.find(query, {'_id': 0})
+        usuario = find("usuarios", query=query, fields=fields)
         response = json_util.dumps(usuario)
     except:
         response = make_response(jsonify({'erro':
