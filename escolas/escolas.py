@@ -1,26 +1,18 @@
 # -*- coding: utf-8 -*-
-import json
-import os
 
 from flask import request, Blueprint, Response
-from pymongo import MongoClient
 from bson import json_util
 from flasgger import swag_from
-from utils.utils import fill_data_query
+from settings.api_settings import db
+from utils.utils import (fill_data_query, get_refeicoes_data, get_idades_data,
+                         load_json_data)
 
-API_KEY = os.environ.get('API_KEY')
-API_MONGO_URI = 'mongodb://{}'.format(os.environ.get('API_MONGO_URI'))
-
-client = MongoClient(API_MONGO_URI)
-db = client['pratoaberto']
 
 escolas_api = Blueprint('escolas_api', __name__)
 
-with open('de_para.json', 'r') as f:
-    conf = json.load(f)
-    refeicoes = conf['refeicoes']
-    idades = conf['idades']
-    idades_reversed = {v: k for k, v in conf['idades'].items()}
+conf = load_json_data()
+refeicoes = get_refeicoes_data()
+idades, idades_reversed = get_idades_data()
 
 
 def choose_escola_atributos(escola):

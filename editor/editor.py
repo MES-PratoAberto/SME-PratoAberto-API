@@ -1,28 +1,19 @@
 # -*- coding: utf-8 -*-
-import json
-import os
 
 from flask import request, Blueprint, Response
-from pymongo import MongoClient
 from bson import json_util
 from flasgger import swag_from
 from users.users import requer_autenticacao
-from utils.utils import update_data, cardapios_from_db, define_query_from_request
+from cardapios.cardapios import cardapios_from_db
+from settings.api_settings import API_KEY, db
+from utils.utils import (update_data, define_query_from_request,
+                         get_idades_data, get_refeicoes_data)
 
-
-API_KEY = os.environ.get('API_KEY')
-API_MONGO_URI = 'mongodb://{}'.format(os.environ.get('API_MONGO_URI'))
-
-client = MongoClient(API_MONGO_URI)
-db = client['pratoaberto']
 
 editor_api = Blueprint('editor_api', __name__)
 
-with open('de_para.json', 'r') as f:
-    conf = json.load(f)
-    refeicoes = conf['refeicoes']
-    idades = conf['idades']
-    idades_reversed = {v: k for k, v in conf['idades'].items()}
+refeicoes = get_refeicoes_data()
+idades, idades_reversed = get_idades_data()
 
 
 def query_editor_cardapio():
@@ -54,6 +45,7 @@ def get_cardapios_editor():
     )
     return response
 
+
 def post_cardapios_editor(request):
         bulk = db.cardapios.initialize_ordered_bulk_op()
         for item in json_util.loads(request.data.decode("utf-8")):
@@ -64,6 +56,7 @@ def post_cardapios_editor(request):
                 bulk.insert(item)
         bulk.execute()
         return ('', 200)
+
 
 @editor_api.route('/editor/cardapios', methods=['GET', 'POST'])
 @swag_from('swagger_docs/editor_cardapios.yml')
@@ -79,6 +72,7 @@ def processa_cardapios_editor():
         response = post_cardapios_editor(request)
 
     return response
+
 
 @editor_api.route('/editor/escolas')
 @swag_from('swagger_docs/editor_escolas.yml')
@@ -96,6 +90,7 @@ def get_escolas_editor():
         mimetype='application/json'
     )
     return response
+
 
 @editor_api.route('/editor/escola/<int:id_escola>', methods=['POST'])
 @swag_from('swagger_docs/editor_escola.yml')
