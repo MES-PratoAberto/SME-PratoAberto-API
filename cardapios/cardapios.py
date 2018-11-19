@@ -4,10 +4,9 @@ from flask import request, Blueprint, Response
 from bson import json_util
 from flasgger import swag_from
 from ODM.flask_odm import find
-from utils.utils import (fill_data_query, define_query_from_request,
-                         get_idades_data)
-                         
-from refeicoes.refeicoes import get_refeicoes_data
+from utils.utils import (get_idades_data)
+from db.db import fill_data_query , define_query_from_request
+from refeicoes.refeicoes import get_refeicoes_data,refeicoes_cardapio
 
 
 cardapios_api = Blueprint('cardapios_api', __name__)
@@ -31,14 +30,6 @@ def preenche_cardapios_idade(lista_cardapios, idades):
     for dictionary in lista_cardapios:
         dictionary['idade'] = idades[dictionary['idade']]
     return dictionary
-
-
-def refeicoes_cardapio(cardapios, refeicoes):
-        for cardapio in cardapios:
-            for item in refeicoes:
-                if refeicoes[item] in cardapios['cardapio']:
-                    cardapios['cardapio'][refeicoes[item]] = sorted(cardapios['cardapio']
-                                                                        [refeicoes[item]])
 
 
 def definir_ordenacao(definicao_ordenacao, cardapios):

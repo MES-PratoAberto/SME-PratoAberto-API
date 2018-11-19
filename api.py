@@ -5,6 +5,7 @@ from users.users import users_api
 from escolas.escolas import escolas_api
 from cardapios.cardapios import cardapios_api
 from editor.editor import editor_api
+from db.db import db_api
 from refeicoes.refeicoes import refeicoes_api
 from flasgger import Swagger
 
@@ -17,6 +18,7 @@ def create_app():
     app.register_blueprint(cardapios_api)
     app.register_blueprint(editor_api)
     app.register_blueprint(refeicoes_api)
+    app.register_blueprint(db_api)
     swagger = Swagger(app)
 
     return app

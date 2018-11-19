@@ -7,9 +7,8 @@ from users.users import requer_autenticacao
 from cardapios.cardapios import cardapios_from_db
 from ODM.flask_odm import find
 from settings.api_settings import API_KEY, db
-from utils.utils import (update_data, define_query_from_request,
-                         get_idades_data)
-                         
+from db.db import fill_data_query , define_query_from_request
+from utils.utils import get_idades_data
 from refeicoes.refeicoes import get_refeicoes_data
 
 
@@ -29,7 +28,7 @@ def query_editor_cardapio():
     query = define_query_from_request(query, request, False)
 
     data = {}
-    data = update_data(data, request)
+    data = update_date(data, request)
     if data:
         query['data'] = data
     return query

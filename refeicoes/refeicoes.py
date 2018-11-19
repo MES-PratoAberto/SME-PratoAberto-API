@@ -15,3 +15,7 @@ def ordena_refeicoes(cardapios, refeicoes):
         if refeicoes[item] in cardapios['cardapio']:
             cardapios['cardapio'][refeicoes[item]] = sorted(cardapios['cardapio']
                                                                 [refeicoes[item]])
+
+def refeicoes_cardapio(cardapios, refeicoes):
+        for cardapio in cardapios:
+            ordena_refeicoes(cardapios, refeicoes)

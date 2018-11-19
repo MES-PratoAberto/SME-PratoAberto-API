@@ -5,8 +5,9 @@ from bson import json_util
 from flasgger import swag_from
 from settings.api_settings import db
 from ODM.flask_odm import find, find_one
-from utils.utils import (fill_data_query, get_idades_data, load_json_data)
+from utils.utils import (get_idades_data, load_json_data)
 from refeicoes.refeicoes import get_refeicoes_data, ordena_refeicoes
+from db.db import fill_data_query , define_query_from_request
 
 
 escolas_api = Blueprint('escolas_api', __name__)
