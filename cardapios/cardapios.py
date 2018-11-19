@@ -5,7 +5,9 @@ from bson import json_util
 from flasgger import swag_from
 from ODM.flask_odm import find
 from utils.utils import (fill_data_query, define_query_from_request,
-                         get_idades_data, get_refeicoes_data)
+                         get_idades_data)
+                         
+from refeicoes.refeicoes import get_refeicoes_data
 
 
 cardapios_api = Blueprint('cardapios_api', __name__)

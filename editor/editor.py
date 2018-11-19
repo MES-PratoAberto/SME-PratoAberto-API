@@ -8,7 +8,9 @@ from cardapios.cardapios import cardapios_from_db
 from ODM.flask_odm import find
 from settings.api_settings import API_KEY, db
 from utils.utils import (update_data, define_query_from_request,
-                         get_idades_data, get_refeicoes_data)
+                         get_idades_data)
+                         
+from refeicoes.refeicoes import get_refeicoes_data
 
 
 editor_api = Blueprint('editor_api', __name__)
