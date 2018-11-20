@@ -3,6 +3,7 @@ from flask import request, Blueprint, Response
 from bson import json_util
 from flasgger import swag_from
 from ODM.flask_odm import find
+from utils.jsonUtils  import get_idades_data
 
 db_api = Blueprint('db_api', __name__)
 

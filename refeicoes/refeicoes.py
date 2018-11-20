@@ -1,5 +1,5 @@
 from flask import Blueprint
-from utils.utils import load_json_data
+from utils.jsonUtils  import load_json_data
 
 refeicoes_api = Blueprint('refeicoes_api', __name__)
 

@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 
-from flask import request, Blueprint, Response
+from flask import request, Blueprint
 from bson import json_util
 from flasgger import swag_from
 from settings.api_settings import db
 from ODM.flask_odm import find, find_one
-from utils.utils import (get_idades_data, load_json_data)
+from utils.jsonUtils  import (get_idades_data, load_json_data)
+from utils import responseUtils
 from refeicoes.refeicoes import get_refeicoes_data, ordena_refeicoes
 from db.db import fill_data_query , define_query_from_request
 
@@ -17,7 +18,7 @@ refeicoes = get_refeicoes_data()
 idades, idades_reversed = get_idades_data()
 
 
-def choose_escola_atributos(escola):
+def escolhe_escola_atributos(escola):
         if 'idades' in escola:
             escola['idades'] = [idades.get(x, x) for x in escola['idades']]
         if 'refeicoes' in escola:
@@ -25,17 +26,10 @@ def choose_escola_atributos(escola):
                                    x in escola['refeicoes']]
 
         if escola:
-            return Response(
-                response=json_util.dumps(escola),
-                status=200,
-                mimetype='application/json'
-            )
+            return responseUtils.responde(responseUtils.STATUS_OK, escola)
         else:
-            return Response(
-                response=json_util.dumps({'erro': 'Escola inexistente'}),
-                status=404,
-                mimetype='application/json'
-            )
+            return responseUtils.responde(responseUtils.STATUS_NOT_FOUND,
+            responseUtils.ERRO_ESCOLA_INEXISTENTE)
 
 
 @escolas_api.route('/escolas')
@@ -54,11 +48,7 @@ def get_lista_escolas():
                                          'bairro', 'lat', 'lon']})
         cursor = find("escolas", query=query, fields=fields, limit=limit)
 
-    return Response(
-        response=json_util.dumps(cursor),
-        status=200,
-        mimetype='application/json'
-    )
+    return responseUtils.responde(responseUtils.STATUS_OK, cursor)
 
 
 @escolas_api.route('/escola/<int:id_escola>')
@@ -67,7 +57,7 @@ def get_detalhe_escola(id_escola):
     query = {'_id': id_escola, 'status': 'ativo'}
     fields = {'_id': False, 'status': False}
     escola = find_one("escolas", query=query, fields=fields)
-    response = choose_escola_atributos(escola)
+    response = escolhe_escola_atributos(escola)
     return response
 
 
@@ -130,15 +120,8 @@ def get_cardapio_escola(id_escola, data=None):
         cardapios = busca_cardapios_escola(query)
         cardapios = busca_refeicoes_cardapio(cardapios)
 
-        return Response(
-            response=json_util.dumps(cardapios),
-            status=200,
-            mimetype='application/json'
-        )
+        return responseUtils.responde(responseUtils.STATUS_OK, cardapios)
 
     else:
-        return Response(
-            response=json_util.dumps({'erro': 'Escola inexistente'}),
-            status=404,
-            mimetype='application/json'
-        )
+        return responseUtils.responde(responseUtils.STATUS_NOT_FOUND,
+        responseUtils.ERRO_ESCOLA_INEXISTENTE)

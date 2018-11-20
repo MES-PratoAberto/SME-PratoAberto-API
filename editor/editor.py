@@ -1,20 +1,19 @@
 # -*- coding: utf-8 -*-
 
-from flask import request, Blueprint, Response
+from flask import request, Blueprint
 from bson import json_util
 from flasgger import swag_from
 from users.users import requer_autenticacao
 from cardapios.cardapios import cardapios_from_db
 from ODM.flask_odm import find
 from settings.api_settings import API_KEY, db
-from db.db import fill_data_query , define_query_from_request
-from utils.utils import get_idades_data
-from refeicoes.refeicoes import get_refeicoes_data
+from db.db import fill_data_query, define_query_from_request, update_date
+from utils.jsonUtils  import get_idades_data
+from utils import responseUtils
 
 
 editor_api = Blueprint('editor_api', __name__)
 
-refeicoes = get_refeicoes_data()
 idades, idades_reversed = get_idades_data()
 
 
@@ -41,12 +40,7 @@ def get_cardapios_editor():
     cardapios.sort([('data', -1)])
     cardapios = cardapios_from_db(cardapios, request)
 
-    response = Response(
-        response=json_util.dumps(cardapios),
-        status=200,
-        mimetype='application/json'
-    )
-    return response
+    return responseUtils.responde(responseUtils.STATUS_OK, cardapios)
 
 
 def post_cardapios_editor(request):
@@ -58,7 +52,7 @@ def post_cardapios_editor(request):
             except:
                 bulk.insert(item)
         bulk.execute()
-        return ('', 200)
+        responseUtils.responde_vazio()
 
 
 @editor_api.route('/editor/cardapios', methods=['GET', 'POST'])
@@ -66,7 +60,7 @@ def post_cardapios_editor(request):
 def processa_cardapios_editor():
     key = request.headers.get('key')
     if key != API_KEY:
-        return ('', 401)
+        responseUtils.responde_vazio(responseUtils.STATUS_UNAUTHORIZED)
 
     if request.method == 'GET':
         response = get_cardapios_editor()
@@ -82,17 +76,11 @@ def processa_cardapios_editor():
 def get_escolas_editor():
     key = request.headers.get('key')
     if key != API_KEY:
-        return ('', 401)
+        responseUtils.responde_vazio(responseUtils.STATUS_UNAUTHORIZED)
 
     query = {'status': 'ativo'}
     cursor = find("escolas", query=query)
-
-    response = Response(
-        response=json_util.dumps(cursor),
-        status=200,
-        mimetype='application/json'
-    )
-    return response
+    return responseUtils.responde(responseUtils.STATUS_OK, cursor)
 
 
 @editor_api.route('/editor/escola/<int:id_escola>', methods=['POST'])
@@ -101,20 +89,16 @@ def get_escolas_editor():
 def edit_escola(id_escola):
     key = request.headers.get('key')
     if key != API_KEY:
-        return ('', 401)
+        responseUtils.responde_vazio(responseUtils.STATUS_UNAUTHORIZED)
 
     try:
         payload = json_util.loads(request.data)
     except:
-        return Response(
-            response=json_util.dumps({'erro':
-                                     'Dados POST não é um JSON válido'}),
-            status=500,
-            mimetype='application/json'
-        )
+        return responseUtils.responde(responseUtils.STATUS_UNAUTHORIZED,
+        responseUtils.ERRO_POST_INVALIDO)
 
     db.escolas.update_one(
         {'_id': id_escola},
         {'$set': payload},
         upsert=False)
-    return ('', 200)
+    return responseUtils.responde_vazio()

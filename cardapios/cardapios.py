@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 
-from flask import request, Blueprint, Response
+from flask import request, Blueprint
 from bson import json_util
 from flasgger import swag_from
 from ODM.flask_odm import find
-from utils.utils import (get_idades_data)
+from utils.jsonUtils  import (get_idades_data)
+from utils import responseUtils
 from db.db import fill_data_query , define_query_from_request
 from refeicoes.refeicoes import get_refeicoes_data,refeicoes_cardapio
 
@@ -82,8 +83,4 @@ def get_cardapios(data=None):
     preenche_cardapios_idade(cardapio_ordenado, idades)
     refeicoes_cardapio(cardapios, refeicoes)
 
-    return Response(
-        response=json_util.dumps(cardapio_ordenado),
-        status=200,
-        mimetype='application/json'
-    )
+    return responseUtils.responde(responseUtils.STATUS_OK, cardapio_ordenado)
