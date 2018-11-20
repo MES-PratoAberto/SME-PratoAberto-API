@@ -1,51 +1,50 @@
 # -*- coding: utf-8 -*-
-import json
-import os
 
-from flask import request, Blueprint, Response
-from pymongo import MongoClient
+from flask import request, Blueprint
 from bson import json_util
 from flasgger import swag_from
-from utils.utils import update_data, fill_data_query, cardapios_from_db, define_query_from_request
+from ODM.flask_odm import find
+from utils.jsonUtils  import (get_idades_data)
+from utils import responseUtils
+from db.db import fill_data_query , define_query_from_request
+from refeicoes.refeicoes import get_refeicoes_data,refeicoes_cardapio
 
-
-API_KEY = os.environ.get('API_KEY')
-API_MONGO_URI = 'mongodb://{}'.format(os.environ.get('API_MONGO_URI'))
-
-client = MongoClient(API_MONGO_URI)
-db = client['pratoaberto']
 
 cardapios_api = Blueprint('cardapios_api', __name__)
 
-with open('de_para.json', 'r') as f:
-    conf = json.load(f)
-    refeicoes = conf['refeicoes']
-    idades = conf['idades']
-    idades_reversed = {v: k for k, v in conf['idades'].items()}
+refeicoes = get_refeicoes_data()
+idades, idades_reversed = get_idades_data()
+
+
+def cardapios_from_db(cardapios, request):
+    limit = int(request.args.get('limit', 0))
+    page = int(request.args.get('page', 0))
+
+    if page and limit:
+        cardapios = cardapios.skip(limit*(page-1)).limit(limit)
+    elif limit:
+        cardapios = cardapios.limit(limit)
+    return cardapios
+
 
 def preenche_cardapios_idade(lista_cardapios, idades):
     for dictionary in lista_cardapios:
         dictionary['idade'] = idades[dictionary['idade']]
     return dictionary
 
-def refeicoes_cardapio(cardapios,refeicoes):
-        for cardapio in cardapios:
-            for item in refeicoes:
-                if refeicoes[item] in cardapios['cardapio']:
-                    cardapios['cardapio'][refeicoes[item]] = sorted(cardapios['cardapio']
-                                                                        [refeicoes[item]])
 
 def definir_ordenacao(definicao_ordenacao, cardapios):
     _cardapios = []
     for cardapio in cardapios:
         _cardapios.append(cardapio)
-    cardapio_ordenado =[]
+    cardapio_ordenado = []
     for item in definicao_ordenacao:
         for cardapio in _cardapios:
             if item == cardapio['idade']:
                 cardapio_ordenado.append(cardapio)
                 continue
     return cardapio_ordenado
+
 
 @cardapios_api.route('/cardapios')
 @cardapios_api.route('/cardapios/<data>')
@@ -61,7 +60,7 @@ def get_cardapios(data=None):
         'status': False,
         'cardapio_original': False,
     }
-    cardapios = db.cardapios.find(query, fields).sort([('data', -1)])
+    cardapios = find("cardapios", query=query, fields=fields, sort=True)
     cardapios = cardapios_from_db(cardapios, request)
     cardapio_ordenado = []
     definicao_ordenacao = ['A - 0 A 1 MES', 'B - 1 A 3 MESES',
@@ -81,11 +80,7 @@ def get_cardapios(data=None):
                            'U - PROFESSOR JANTAR CEI']
 
     cardapio_ordenado = definir_ordenacao(definicao_ordenacao, cardapios)
-    preenche_cardapios_idade(cardapio_ordenado,idades)
+    preenche_cardapios_idade(cardapio_ordenado, idades)
     refeicoes_cardapio(cardapios, refeicoes)
 
-    return Response(
-        response=json_util.dumps(cardapio_ordenado),
-        status=200,
-        mimetype='application/json'
-    )
+    return responseUtils.responde(responseUtils.STATUS_OK, cardapio_ordenado)

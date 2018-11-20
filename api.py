@@ -1,20 +1,14 @@
 # -*- coding: utf-8 -*-
-import os
 
-from flask import Flask, request
-from pymongo import MongoClient
-from bson import json_util
-from users.users import users_api, requer_autenticacao
+from flask import Flask
+from users.users import users_api
 from escolas.escolas import escolas_api
 from cardapios.cardapios import cardapios_api
 from editor.editor import editor_api
-from flasgger import Swagger, swag_from
+from db.db import db_api
+from refeicoes.refeicoes import refeicoes_api
+from flasgger import Swagger
 
-API_KEY = os.environ.get('API_KEY')
-API_MONGO_URI = 'mongodb://{}'.format(os.environ.get('API_MONGO_URI'))
-
-client = MongoClient(API_MONGO_URI)
-db = client['pratoaberto']
 
 def create_app():
 
@@ -23,9 +17,12 @@ def create_app():
     app.register_blueprint(escolas_api)
     app.register_blueprint(cardapios_api)
     app.register_blueprint(editor_api)
+    app.register_blueprint(refeicoes_api)
+    app.register_blueprint(db_api)
     swagger = Swagger(app)
 
     return app
+
 
 if __name__ == '__main__':
     app = create_app()
